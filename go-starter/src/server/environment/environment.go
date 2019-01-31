@@ -16,4 +16,5 @@ const (
 	TestIdentifierName        = "Test"
 	DevelopmentIdentifierName = "Development"
 	ProductionIdentifierName  = "Production"
+	IdentifierVariableKey     = "environment-identifier"
 )

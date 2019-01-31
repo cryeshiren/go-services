@@ -8,12 +8,19 @@ import (
 	"log"
 )
 
+var dbConfig DBConfig
+
 const(
 	postgreUserVariableKey = "postgre-user"
 	postgrePasswordVariableKey = "postgre-password"
 	postgreDBNameVariableKey = "postgre-password"
 	defaultConnectionString = "user=postgres dbname=performance sslmode=disable"
 )
+
+type DBConfig struct {
+	User string
+	DBName string
+}
 
 var Engine *xorm.Engine
 
@@ -31,14 +38,15 @@ func SyncTable(entityPackage string) {
 	_ = Engine.Sync2(new(entity.Student))
 }
 
-func getConnecionString() string{
+func initDBConfig(){
 	postgreUser := util.GetVariable(postgreUserVariableKey)
 	postgrePassword := util.GetVariable(postgrePasswordVariableKey)
 	dbName := util.GetVariable(postgreDBNameVariableKey)
 
 	if len(postgreUser) > 0 && len(postgrePassword) > 0 && len(dbName) > 0{
-		return "user=" + postgreUser + " dbname=" + dbName + " sslmode=disable"
+		dbConfig.User = postgreUser
+		dbConfig.DBName  = postgrePassword
+	}else{
+		//dbConfig.User = ini.
 	}
-
-	return defaultConnectionString
 }

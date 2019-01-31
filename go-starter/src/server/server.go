@@ -1,23 +1,25 @@
 package server
 
 import (
-	"../controller"
 	r "../controller/router"
 	"../database"
 	e "../server/environment"
 	"../util"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-ini/ini"
 	"io"
 	"log"
 	"os"
-	"strings"
+	"strconv"
 	"time"
 )
 
+var environment e.Environment
+
 func Start() {
 	initEnvironment()
-	injectionDifferentGinConfigWithEnv(env.Identifier)
+	injectionDifferentGinConfigWithEnv(environment.Identifier)
 	router := gin.New()
 	// Global middleware
 	// Logger middleware will write the logs to gin.DefaultWriter even if you set with GIN_MODE=release.
@@ -26,24 +28,39 @@ func Start() {
 	// Recovery middleware recovers from any panics and writes a 500 if there was one.
 	router.Use(gin.Recovery())
 	//Register router
-	//TODO: refactor it
-	controller.RR()
-	r.RegistRouter(router)
+	r.InitializeRouter(router)
 	//init database
 	database.InitEngine()
-	//sync table
-	database.SyncTable("entity")
-	err := router.Run(env.PortForGin)
+	//start server
+	err := router.Run(environment.PortForGin)
 	log.Println(err)
 }
 
 func initEnvironment() {
-	environmentIdentifier := util.GetVariable(environmentVariableKey)
+	environmentIdentifier := util.GetVariable(e.IdentifierVariableKey)
+	var config *ini.File
+	configFileName := "config.ini"
+	if len(environmentIdentifier) > 0 {
+		configFileName = "config." + environmentIdentifier + ".ini"
+	}
+	config, _ = ini.Load(configFileName)
 
-	if len(environmentIdentifier) == 0 || strings.EqualFold(environmentIdentifier, e.DevelopmentIdentifierName) {
-		createEnvironment(e.Development)
-	} else {
-		createEnvironment(e.Production)
+	port, _ := config.Section("http").Key("port").Int()
+
+	identifier := 0
+	switch environmentIdentifier {
+	case e.DevelopmentIdentifierName:
+		identifier = e.Development
+	case e.TestIdentifierName:
+		identifier = e.Test
+	case e.ProductionIdentifierName:
+		identifier = e.Production
+	}
+
+	environment = e.Environment{
+		PortForGin: ":" + strconv.Itoa(port),
+		Port: port,
+		Identifier: identifier,
 	}
 }
 
