@@ -2,7 +2,7 @@ package server
 
 import (
 	e "../server/environment"
-	"os"
+	"../util"
 	"strconv"
 )
 
@@ -15,7 +15,7 @@ const (
 var env *e.Environment
 
 func getPort() int {
-	port := getVariable(portVariable)
+	port := util.GetVariable(portVariable)
 
 	if len(port) > 0 {
 		p, _ := strconv.Atoi(port)
@@ -38,8 +38,4 @@ func createEnvironment(identifier int) {
 	} else {
 		env.Identifier = identifier
 	}
-}
-
-func getVariable(variable string) string {
-	return os.Getenv(variable)
 }

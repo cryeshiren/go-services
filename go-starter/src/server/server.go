@@ -1,7 +1,11 @@
 package server
 
 import (
+	"../controller"
+	r "../controller/router"
+	"../database"
 	e "../server/environment"
+	"../util"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
@@ -21,12 +25,20 @@ func Start() {
 	router.Use(gin.LoggerWithFormatter(getLoggerFormat()))
 	// Recovery middleware recovers from any panics and writes a 500 if there was one.
 	router.Use(gin.Recovery())
+	//Register router
+	//TODO: refactor it
+	controller.RR()
+	r.RegistRouter(router)
+	//init database
+	database.InitEngine()
+	//sync table
+	database.SyncTable("entity")
 	err := router.Run(env.PortForGin)
 	log.Println(err)
 }
 
 func initEnvironment() {
-	environmentIdentifier := getVariable(environmentVariableKey)
+	environmentIdentifier := util.GetVariable(environmentVariableKey)
 
 	if len(environmentIdentifier) == 0 || strings.EqualFold(environmentIdentifier, e.DevelopmentIdentifierName) {
 		createEnvironment(e.Development)
