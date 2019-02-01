@@ -4,6 +4,7 @@ type Environment struct {
 	Identifier int
 	Port       int
 	PortForGin string
+	RootPath string
 }
 
 const (

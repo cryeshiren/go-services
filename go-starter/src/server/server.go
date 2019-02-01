@@ -11,7 +11,10 @@ import (
 	"io"
 	"log"
 	"os"
+	"path"
+	"runtime"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -36,16 +39,44 @@ func Start() {
 	log.Println(err)
 }
 
+func loadConfig(environmentIdentifier string) {
+	configFileName := "/config.ini"
+	if len(environmentIdentifier) > 0 {
+		configFileName = "/config." + environmentIdentifier + ".ini"
+	}
+
+	cfg, err := ini.Load(environment.RootPath+configFileName)
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	e.ServerConfig = cfg
+}
+
+func loadEntity() {
+	entityConfigName := "/database/entity/entity.ini"
+	cfg, err := ini.LoadSources(ini.LoadOptions{
+		AllowBooleanKeys: true,
+	}, environment.RootPath + entityConfigName)
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	keys := cfg.Section("entity").Keys()
+
+	for _, key := range keys {
+		database.EntityContainer = append(database.EntityContainer, database.EntityName(key.String()))
+	}
+}
+
 func initEnvironment() {
 	environmentIdentifier := util.GetVariable(e.IdentifierVariableKey)
-	var config *ini.File
-	configFileName := "config.ini"
-	if len(environmentIdentifier) > 0 {
-		configFileName = "config." + environmentIdentifier + ".ini"
-	}
-	config, _ = ini.Load(configFileName)
-
-	port, _ := config.Section("http").Key("port").Int()
+	environment = e.Environment{}
+	environment.RootPath = getRootPath()
+	loadConfig(environmentIdentifier)
+	port, _ := e.ServerConfig.Section("http").Key("port").Int()
 
 	identifier := 0
 	switch environmentIdentifier {
@@ -57,11 +88,13 @@ func initEnvironment() {
 		identifier = e.Production
 	}
 
-	environment = e.Environment{
-		PortForGin: ":" + strconv.Itoa(port),
-		Port: port,
-		Identifier: identifier,
-	}
+	environment.PortForGin =  ":" + strconv.Itoa(port)
+	environment.Port = port
+	environment.Identifier = identifier
+
+	loadEntity()
+	database.InitDBConfig()
+	database.SyncTable()
 }
 
 func injectionDifferentGinConfigWithEnv(identifier int) {
@@ -93,4 +126,14 @@ func getLoggerFormat() func(param gin.LogFormatterParams) string {
 			param.ErrorMessage,
 		)
 	}
+}
+
+func getRootPath() string {
+	_, filename, _, ok := runtime.Caller(0)
+
+	if !ok {
+		return ""
+	}
+
+	return path.Join(strings.Replace(path.Dir(filename), "/server", "", 1), "")
 }
