@@ -6,8 +6,8 @@ import (
 )
 
 func InitializeRouter(engine *gin.Engine){
-	students := engine.Group("/students")
+	students := engine.Group("/v1/students")
 	{
-		students.GET("/:id", controller.GetStudents)
+		students.GET("/:id", controller.GetStudentById)
 	}
 }

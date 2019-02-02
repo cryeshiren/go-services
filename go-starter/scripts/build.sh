@@ -1,1 +1,3 @@
-go build ../src/main.go
+cd ../src
+swag init
+go build main.go

@@ -28,7 +28,7 @@ type EntityName string
 var Engine *xorm.Engine
 var EntityContainer = make([]EntityName, 0)
 
-func InitEngine() {
+func InitDBEngine() {
 	e, err := xorm.NewEngine("postgres", getConnecionString())
 
 	if err != nil {

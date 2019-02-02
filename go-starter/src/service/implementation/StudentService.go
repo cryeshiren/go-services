@@ -9,8 +9,8 @@ type StudentService struct {
 
 }
 
-func GetStudents() []entity.Student{
-	students := make([]entity.Student, 0)
-	_ = database.Engine.Find(&students)
-	return students
+func GetStudentById(id int) *entity.Student{
+	student := new(entity.Student)
+	database.Engine.Id(id).Get(student)
+	return student
 }

@@ -3,11 +3,14 @@ package server
 import (
 	r "../controller/router"
 	"../database"
+	"../docs"
 	e "../server/environment"
 	"../util"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-ini/ini"
+	"github.com/swaggo/gin-swagger"
+	"github.com/swaggo/gin-swagger/swaggerFiles"
 	"io"
 	"log"
 	"os"
@@ -32,9 +35,10 @@ func Start() {
 	router.Use(gin.Recovery())
 	//Register router
 	r.InitializeRouter(router)
+	//start swagger
+	startSwagger(environment.Identifier, router)
 	//init database
-	database.InitEngine()
-	//database.SyncTable()
+	database.InitDBEngine()
 	//start server
 	err := router.Run(environment.PortForGin)
 	log.Println(err)
@@ -138,4 +142,15 @@ func getRootPath() string {
 	}
 
 	return path.Join(strings.Replace(path.Dir(filename), "/server", "", 1), "")
+}
+
+func startSwagger(identifier int, router *gin.Engine) {
+	if environment.Identifier == e.Development {
+		docs.SwaggerInfo.Title = "go-start-service"
+		docs.SwaggerInfo.Description = "This is a golang api service."
+		docs.SwaggerInfo.Version = "1.0"
+		docs.SwaggerInfo.BasePath = "/v1"
+
+		router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 }
