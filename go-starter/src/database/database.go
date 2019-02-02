@@ -1,12 +1,12 @@
 package database
 
 import (
+	"../database/entity"
 	e "../server/environment"
 	"../util"
 	"fmt"
 	"github.com/go-xorm/xorm"
 	_ "github.com/lib/pq"
-	"github.com/modern-go/reflect2"
 	"log"
 )
 
@@ -39,13 +39,10 @@ func InitEngine() {
 }
 
 func SyncTable() {
-	var types = make([]interface{}, 0)
-	for _, entity := range EntityContainer {
-		types = append(types, reflect2.TypeByName(string(entity)))
-	}
-	err := Engine.Sync2(types)
+	err := Engine.Sync2(new(entity.Student), new(entity.Class))
 
 	if err != nil {
+		log.Println(err.Error())
 		log.Fatal("Sync table failed.")
 	}
 }
@@ -60,10 +57,10 @@ func InitDBConfig(){
 		DbConfig.DBName  = postgrePassword
 	}else{
 		DbConfig.User = e.ServerConfig.Section("database").Key("user").String()
-		DbConfig.DBName = e.ServerConfig.Section("databse").Key("db").String()
+		DbConfig.DBName = e.ServerConfig.Section("database").Key("db").String()
 	}
 }
 
 func getConnecionString() string{
-	return fmt.Sprint("user=s% dbname=s% sslmode=disable", DbConfig.User, DbConfig.DBName)
+	return fmt.Sprintf("user=%s dbname=%s sslmode=disable", DbConfig.User, DbConfig.DBName)
 }

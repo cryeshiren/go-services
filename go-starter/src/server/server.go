@@ -34,6 +34,7 @@ func Start() {
 	r.InitializeRouter(router)
 	//init database
 	database.InitEngine()
+	//database.SyncTable()
 	//start server
 	err := router.Run(environment.PortForGin)
 	log.Println(err)
@@ -64,10 +65,10 @@ func loadEntity() {
 		log.Fatal(err.Error())
 	}
 
-	keys := cfg.Section("entity").Keys()
+	keys := cfg.Section("entity").KeyStrings()
 
 	for _, key := range keys {
-		database.EntityContainer = append(database.EntityContainer, database.EntityName(key.String()))
+		database.EntityContainer = append(database.EntityContainer, database.EntityName(key))
 	}
 }
 
@@ -86,6 +87,8 @@ func initEnvironment() {
 		identifier = e.Test
 	case e.ProductionIdentifierName:
 		identifier = e.Production
+	default:
+		identifier = e.Development
 	}
 
 	environment.PortForGin =  ":" + strconv.Itoa(port)
@@ -94,7 +97,6 @@ func initEnvironment() {
 
 	loadEntity()
 	database.InitDBConfig()
-	database.SyncTable()
 }
 
 func injectionDifferentGinConfigWithEnv(identifier int) {
